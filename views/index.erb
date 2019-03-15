@@ -5,9 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>index.erb</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <p>今の時刻は: <%=  @now %>です。</p>
+  <p>今の時刻は: <%= @now %>です。</p>
+
+  <table>
+    <tr>
+      <th>ID</th>
+      <th>name</th>
+    </tr>
+    <% @contacts.each do | contact | %>
+    <tr>
+      <td><%= contact.id %></td>
+      <td><%= contact.name %></td>
+    </tr>
+    <% end  %>
+  </table>
+
   <p><a href="/contact_new">新規ユーザーを追加する</a></p>
   <footer><a href="about.html">このサイトについて</a></footer>
 </body>

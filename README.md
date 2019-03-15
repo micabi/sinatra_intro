@@ -82,9 +82,9 @@ $ touch index.erb
 <html>
 ```
 
-* 変数nowに@をつけるとviwes/index.erbから参照できる変数となる
-* erb :indexとすることで/にアクセスされたらindex.erbが表示される（呼び出される）ようになる。
-* テンプレート（views/***.erb）からapp.rbで定義した変数を呼び出す場合は
+> 変数nowに@をつけるとviwes/index.erbから参照できる変数となる<br><br>
+>erb :indexとすることで/にアクセスされたらindex.erbが表示される（呼び出される）ようになる。<br><br>
+>テンプレート（views/***.erb）からapp.rbで定義した変数を呼び出す場合は
 <%=  %>で挟む。
 
 @app.rb
@@ -122,7 +122,9 @@ $ touch style.css
     └── index.erb
 ```
 
-## フォームを使う
+---
+
+## フォーム(POST通信)を使う
 
 ```
 $ cd views
@@ -181,10 +183,28 @@ get '/' do
   erb :index
 end
 
-get '/contact_new' do
-  erb :contact_form
+get '/contact_new' do  ## フォームのページ
+  erb :contact_form  ## ここではurlとファイル名を変えたが同じでも良い。
 end
 ```
+
+@app.rb
+```
+get '/contact_new' do  ## フォームのページ
+  erb :contact_form
+end
+
+
+post '/contacts' do
+  puts params  ## postされたデータはparamsで受け取る
+
+  redirect '/'  ## topへリダイレクト
+end
+```
+>テンプレートviews/contact_form.rbからpostされた送信先としてcontactsというurlを指定しているが、表示は必要ない処理なのでviewを作っていないことに注目！！
+
+
+
 <br>
 
 # gemをbundlerを使って管理する
@@ -262,7 +282,7 @@ gem 'sinatra-reloader'   ## こう書く
 ```
 require 'rubygems'  ## この
 require 'bundler'   ## 3行を
-Bundler.require   ## 書く
+Bundler.require   ## 追記
 
 
 get '/' do
@@ -323,7 +343,7 @@ set :database, {adapter: "sqlite3", database: "contacts.sqlite3"}  ## ***.sqlite
 
 ### Rakefileを作成する
 
->さきほどインストールしたgem 'rake'はruby-makeというコマンドで、rubyで定型的な処理をさせるためのもの。
+>さきほどインストールしたgem 'rake(ruby-make)'は、rubyで定型的な処理をさせるためのもの。シェルスクリプトの.shファイルみたいなもの。
 
 RakefileはRubyで書かれたタスクを定義するファイル。
 
@@ -378,7 +398,7 @@ $ bundle exec rake -T
 
 * app.rb用のデータベースができた
 * db名はcontacts
-* まだ中身は空っぽ（テーブルもデータも構造もない）
+* まだ中身は空っぽ（テーブルもデータもカラムもない）
 
 
 
@@ -387,18 +407,20 @@ $ bundle exec rake -T
 
 ## テーブルを作成する
 
-### マイグレーションファイルを作成する
+### 1. マイグレーションファイルを作成する
 
-
+>マイグレーションファイルとは
+データベースのテーブル構造(テーブルやカラムの追加・削除・編集）の変更内容をテキストベースで管理するためのファイル。※本番環境のデータベースを直接操作するものではない。
 
 @console
 ```
 $ bundle exec rake db:create_migration NAME=contacts_users
 ```
 
-dbディレクトリが新たに作成され、その中にschema.rbファイルと、migrateディレクトリが入った状態になる。
+'contact_users.rb'という名前のマイグレーションファイルが作成される。
 
-ディレクトリ構成
+※dbディレクトリが新たに作成され、その中にschema.rbファイルと、migrateディレクトリが入った状態になる。
+
 ```
 ├── Rakefile
 ├── Gemfile
@@ -415,10 +437,10 @@ dbディレクトリが新たに作成され、その中にschema.rbファイル
 └── db
    ├── schema.rb
    └── migrate
-        └──...
+        └──contact_users.rb
 ```
 
-$ bundle exec rake db:create_migration NAME=ccontacts_usersした内容のマイグレーションファイルが出来上がっている。
+
 
 @db/migrate/xxxx_create_contacts.rb
 ```
@@ -429,7 +451,7 @@ class CreateContacts < ActiveRecord::Migration[5.2]
 end
 ```
 
-以下の内容を加える。
+ここに以下の内容を追記する。
 
 * contactsというテーブルを作成
 * nameというカラムを追加
@@ -439,16 +461,21 @@ end
 ```
 class CreateContacts < ActiveRecord::Migration[5.2]
   def change
-    create_table :contacts do |t|  ## 加える
-      t.string :name               ## 加える
-    end                            ## 加える
+    create_table :contacts do |t|  ## 追記
+      t.string :name               ## 追記
+    end                            ## 追記
   end
 end
 ```
 
 >マイグレーションファイルはテーブル名、カラム名、そこに入るデータ型を指定した設計図にあたる。Sinatra ActiveRecordの規約としてテーブル名は複数形にする。
 
-設計図をもとにテーブルを作成する。
+>マイグレーションファイル名(create_contacts)はテーブル操作の内容が推測しやすいものにする。create_table_contactsとかの方がベターかも。
+
+
+
+
+### 2.マイグレーションファイル(設計図)をもとにテーブルを作成する。
 
 @console
 ```
@@ -468,10 +495,11 @@ ActiveRecord::Schema.define(version: 2019_03_14_145544) do
 
 end
 ```
+---
 
 ## app.rbにモデルを追記する
 
-モデルとはデータベースとの結びつきの設定である。
+>'モデル'とは使用するテーブルの設定である。主にバリデーションを設定する。
 
 @app.rb
 ```
@@ -481,8 +509,13 @@ end
 ```
 
 >'class Contact'の部分はさきほど作成したテーブル名と同じにする。これで紐付けがされる。大文字で始まり単数形にする。Sinatra ActiveRecordの規約である。
+>この場合は、ActiveRecordから機能を継承したクラスContactを宣言している。
 
-## Viewからデータベースの値を扱う
+---
+
+## テーブルに値を保存する
+
+>おさらい。データベース名: contacts、テーブル名: contacts、カラム: name
 
 @app.rb
 ```
@@ -501,4 +534,81 @@ post '/contacts' do
   # リダイレクト
   redirect '/'
 end
+```
+
+>Contact.new({name: name})でテーブル名contactのnameカラムにpostされてきた識別名nameの値を新規追加する、という意味。1つめのnameはテーブルのカラム名、2つめはinput name="name"のnameを指している。
+
+---
+
+## テーブルから値を取り出して表示する
+
+index.erbに一覧を表示する想定。
+
+
+コントローラーに変数を宣言
+<br><br>
+@app.rb
+```
+get '/' do
+  @now = Time.now
+  @contacts = Contact.all  ## 追記
+
+  erb :index
+end
+```
+<br><br>
+ビューで変数を展開
+<br><br>
+@views/index.erb
+```
+<table>
+    <tr>
+      <th>ID</th>
+      <th>name</th>
+    </tr>
+    <% @contacts.each do | contact | %>
+    <tr>
+      <td><%= contact.id %></td>
+      <td><%= contact.name %></td>
+    </tr>
+    <% end %>
+  </table>
+```
+
+><%=  %>は変数を展開して表示する。
+><%  %>は処理はするが表示しない。
+
+---
+
+## 空白で送信されたらエラー表示をだす
+
+コントローラーに条件分岐処置を追記
+
+@app.rb
+```
+post '/contacts' do
+  # DBへの保存
+
+  @contact = Contact.new({name: name})
+  if @contact.save
+    redirect '/' # topにリダイレクト
+  else
+    erb :contact_form # フォームを再度表示する
+  end
+
+end
+```
+
+エラーが出たときに遷移するビューにエラー表示を追記
+
+@views/contact_new.rb
+```
+<% if @contact.errors.present? %>
+  <p>エラーがあります</p>
+  <ul>
+    <% @contact.errors.full_messages.each do | message | %>
+    <li><%= message %></li>
+    <% end %>
+  </ul>
+  <% end %>
 ```

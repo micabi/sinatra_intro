@@ -8,6 +8,16 @@
 </head>
 <body>
   <h1>新規ユーザーの追加</h1>
+
+  <% if @contact.errors.present? %>
+  <p>エラーがあります</p>
+  <ul>
+    <% @contact.errors.full_messages.each do | message | %>
+    <li><%= message %></li>
+    <% end %>
+  </ul>
+  <% end %>
+
   <form action="/contacts" method="post">
     <input type="text" name="name" id="">
     <input type="submit" value="送信">
