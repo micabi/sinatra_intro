@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>新規ユーザーの追加</title>
+</head>
+<body>
+  <h1>新規ユーザーの追加</h1>
+
+  <% if @contact.errors.present? %>
+  <p>エラーがあります</p>
+  <ul>
+    <% @contact.errors.full_messages.each do | message | %>
+    <li><%= message %></li>
+    <% end %>
+  </ul>
+  <% end %>
+
+  <form action="/contacts" method="post">
+    <input type="text" name="name" id="">
+    <input type="submit" value="送信">
+  </form>
+  <div><a href="/">戻る</a></div>
+</body>
+</html>
