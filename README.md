@@ -499,7 +499,7 @@ end
 
 ## app.rbにモデルを追記する
 
->'モデル'とは使用するテーブルの設定である。主にバリデーションを設定する。
+>'モデル'とは使用するテーブルの設定である。主にバリデーションを設定する。テーブル名と同じにすることで紐付けがされる。大文字で始まり単数形にする。Sinatra ActiveRecordの規約である。
 
 @app.rb
 ```
@@ -508,8 +508,7 @@ class Contact < ActiveRecord::Base
 end
 ```
 
->'class Contact'の部分はさきほど作成したテーブル名と同じにする。これで紐付けがされる。大文字で始まり単数形にする。Sinatra ActiveRecordの規約である。
->この場合は、ActiveRecordから機能を継承したクラスContactを宣言している。
+>この場合は、ActiveRecordから機能を継承したクラスContactを宣言している。中身としてはテーブルcontactsに関する設定となる。
 
 ---
 
@@ -580,11 +579,12 @@ end
 
 ---
 
-## 空白で送信されたらエラー表示をだす
+## 空白で送信されたらエラー表示を出す
 
 コントローラーに条件分岐処置を追記
 
-@app.rb
+@app.rb<br>
+変数contactを@contactとし、ビューから呼び出せるように変更。
 ```
 post '/contacts' do
   # DBへの保存
@@ -599,6 +599,8 @@ post '/contacts' do
 end
 ```
 
+
+
 エラーが出たときに遷移するビューにエラー表示を追記
 
 @views/contact_new.rb
@@ -612,3 +614,123 @@ end
   </ul>
   <% end %>
 ```
+
+このまま実行するとcontact_new.erbでエラーが発生する。呼び出すべき変数@contactがないよ、と。
+
+@app.rb
+```
+get '/contact_new' do
+  @contact = Contact.new  ## 追記
+  erb :contact_new
+end
+```
+---
+
+## セッションを使って1回だけメッセージを出す
+
+>セッションとは複数の値をまとめて送受信できる変数のようなもの。今回はユーザーを新規作成したときに「○○さんを追加しました」というメッセージを１度だけ表示させる目的で利用する。
+
+### アプリでセッションを有効化する
+
+@app.rb
+```
+enable :sessions
+```
+ユーザーを新規作成したときにメッセージ内容を生成する。
+
+@app.rb
+```
+post '/contacts' do
+
+  # DBへの保存
+  @contact = Contact.new({name: name})
+  if @contact.save
+    session[:message] = "#{name}さんを追加しました。"  ## 追記
+    redirect '/'
+  else
+    erb :contact_new
+  end
+
+end
+```
+
+ユーザー一覧でセッションを受け取れるようにする。
+
+@app.rb
+```
+get '/' do
+  ...
+
+  #@message = session[:message]
+  @message = session.delete :message
+
+  erb :index
+end
+```
+>どちらも変数@messageでセッションを代入しているが、
+session.delete :messageとすることで、変数に格納したらセッションを破棄できる。こうすることで1回だけ呼び出せる。
+
+
+
+ビューでセッション内容を呼び出し、表示する。
+
+@views/index.erb
+```
+<% if @message %>
+  <p><%= @message %></p>
+<% end %>
+```
+
+---
+
+## irbコマンドを使ってターミナルからデータベースを操作する方法
+
+>irb(interactive Ruby)とは、対話形式でRubyを実行するコマンド。
+
+@console
+app.rb上でirbを実行する。
+```
+$ irb -r ./app.rb
+```
+全件取ってくる
+```
+irb(main):001:0> Contact.all
+```
+
+id:4のレコードを取ってくる
+```
+> Contact.find(4)
+```
+
+最初、最後のレコードを取ってくる
+```
+> Contact.first
+
+> Contact.last
+```
+
+新規レコードを追加する
+```
+> Contact.create(name: "テスト")
+```
+
+id:4のレコードを削除する
+```
+> c = Contact.find(4)
+> c.destroy
+```
+
+レコードを全件削除する
+```
+> Contact.destroy_all
+```
+
+irbを終了する
+```
+> exit
+```
+
+Contact.***としている部分はapp.rbにモデルとして設定したクラス名の'Contact'を指している。テーブルcontactsについて操作をすることになる。
+
+---
+

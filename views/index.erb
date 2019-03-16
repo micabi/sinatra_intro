@@ -10,6 +10,14 @@
 <body>
   <p>今の時刻は: <%= @now %>です。</p>
 
+  <h1>ユーザー一覧</h1>
+
+  <% if @message %>
+  <div class="message">
+    <p><%= @message %></p>
+  </div><!-- /.message -->
+  <% end %>
+
   <table>
     <tr>
       <th>ID</th>

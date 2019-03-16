@@ -13,3 +13,16 @@ th,td{
   padding: .5em;
   border: 1px solid #333;
 }
+
+/* ========================== */
+/* ユーザー新規追加後のメッセージ              */
+/* ========================== */
+.message{
+  width: 250px;
+  background: crimson;
+  color: #fff;
+}
+
+.message > p{
+  padding: .5em;
+}
