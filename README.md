@@ -1,6 +1,6 @@
 # 作業用のディレクトリを作成する
 
-@console
+@terminal
 ```
 $ mkdir sinatra
 $ cd sinatra
@@ -9,7 +9,7 @@ $ touch app.rb
 
 ## コンソールに文字列を出力してみる
 
-@console
+@terminal
 ```
 $ ruby app.rb
 ```
@@ -39,7 +39,7 @@ get '/' do
 end
 ```
 
-@console
+@terminal
 
 ```
 $ ruby app.rb
@@ -55,7 +55,7 @@ $ ruby app.rb
 「views」というディレクトリを作成する（重要！）
 >sinatraではテンプレートファイルの場所は「views」にするという規約がある。
 
-@console
+@terminal
 ```
 $ mkdir views
 $ cd views
@@ -106,7 +106,7 @@ end
 >sinatraでは静的ファイルの場所は「public」>にするという規約がある。
 >「public」にはcssの他、通常のhtmlファイル>で変数を使わないページをおくこともできる。
 
-@console
+@terminal
 ```
 $ mkdir public
 $ cd public
@@ -214,7 +214,7 @@ end
 
 ## インストール
 
-@console
+@terminal
 
 ```
 $ gem install bundler
@@ -224,7 +224,7 @@ $ gem install bundler
 
 ## Gemfileを作成
 
-@console
+@terminal
 
 ```
 $ bundle init
@@ -294,7 +294,7 @@ get '/' do
 
 ## あらためてGemfileからgemをインストールする
 
-@console
+@terminal
 ```
 $ bundle install --path vendor/bundle
 ```
@@ -309,7 +309,7 @@ $ bundle install --path vendor/bundle
 
 >bundleを使ってgemをインストールすると起動コマンドが変わる。(先頭にbundle execをつける)
 
-@console
+@terminal
 ```
 $ bundle exec ruby app.rb
 ```
@@ -347,7 +347,7 @@ set :database, {adapter: "sqlite3", database: "contacts.sqlite3"}  ## ***.sqlite
 
 RakefileはRubyで書かれたタスクを定義するファイル。
 
-@console
+@terminal
 ```
 $ touch Rakefile
 ```
@@ -388,7 +388,7 @@ set :database, {adapter: "sqlite3", database: "contacts.sqlite3"}
 
 ### Rakefileを実行する
 
-@console
+@terminal
 ```
 $ bundle exec rake -T
 ```
@@ -412,10 +412,13 @@ $ bundle exec rake -T
 >マイグレーションファイルとは
 データベースのテーブル構造(テーブルやカラムの追加・削除・編集）の変更内容をテキストベースで管理するためのファイル。※本番環境のデータベースを直接操作するものではない。
 
-@console
+@terminal
 ```
 $ bundle exec rake db:create_migration NAME=contacts_users
 ```
+
+#### マイグレーションファイルの生成
+>$ bundle exec rake db:create_migration NAME=***
 
 'contact_users.rb'という名前のマイグレーションファイルが作成される。
 
@@ -477,7 +480,7 @@ end
 
 ### 2.マイグレーションファイル(設計図)をもとにテーブルを作成する。
 
-@console
+@terminal
 ```
 $ bundle exec rake:db migrate
 ```
@@ -687,7 +690,7 @@ session.delete :messageとすることで、変数に格納したらセッショ
 
 >irb(interactive Ruby)とは、対話形式でRubyを実行するコマンド。
 
-@console
+@terminal
 app.rb上でirbを実行する。
 ```
 $ irb -r ./app.rb
@@ -714,6 +717,11 @@ id:4のレコードを取ってくる
 > Contact.create(name: "テスト")
 ```
 
+新規レコードを追加する(エラーが出たとき詳細を表示)
+```
+> Contact.create(name: "テスト")!
+```
+
 id:4のレコードを削除する
 ```
 > c = Contact.find(4)
@@ -733,4 +741,106 @@ irbを終了する
 Contact.***としている部分はapp.rbにモデルとして設定したクラス名の'Contact'を指している。テーブルcontactsについて操作をすることになる。
 
 ---
+
+## テーブルにカラムを追加する
+
+データベース構造を変更するには
+1. マイグレーションファイルを生成する
+2. マイグレーションファイルに変更する内容を記述する
+3. マイグレーションを実行する
+4. エラーが出たら...
+
+### 1. マイグレーションファイルを生成する
+
+@terminal
+```
+$ bundle exec rake db:create_migration NAME=add_email_to_contacts_table
+```
+
+### 2. マイグレーションファイルに変更する内容を記述する
+
+@migrate/***add_email_to_contacts_table.rb
+```
+class AddEmailToContactsTable < ActiveRecord::Migration[5.2]
+  def change
+    add_column :contacts, :email, :string  ## 追記
+  end
+end
+```
+
+>add_column :テーブル名, :カラム名, :値の型
+
+### 3. マイグレーションを実行する
+
+@terminal
+```
+$ bundle exec rake db:migrate
+```
+
+これでdb/schema.rbの内容に反映されていたら成功！
+
+
+### 4. エラーが出たら...
+
+マイグレーションを1つ戻す方法
+
+@terminal
+```
+$ bundle exec rake db:rollback
+```
+
+これを繰り返せば何もなかったところまで戻すこともできる。
+
+---
+
+## コントローラーを編集する
+
+マイグレーションでデータベース構造は変更できたので、
+コントローラーも追従させる。
+
+
+今回はcontactsテーブルにemailカラムを追加したので、
+emailをデータベースに追加できるようにする必要がある。
+
+@app.rb
+```
+post '/contacts' do
+
+  name = params[:name]
+  email = params[:email]  ## 追記
+
+  # DBへの保存
+  @contact = Contact.new({name: name, email: email})  ## emailを追記
+
+  if @contact.save
+    session[:message] = "#{name}さんを追加しました。"
+    redirect '/' # topにリダイレクト
+  else
+    erb :contact_new # フォームを再度表示する
+  end
+
+end
+```
+
+---
+
+## ビューを編集する
+
+さらにビューも追従させる。
+
+
+今回はcontactsテーブルにemailカラムを追加したので、
+1. フォームの入力画面にemail入力欄を追加する。
+2. 一覧画面にemailの表示をする。
+
+@views/contact_new.erb
+```
+
+```
+
+@views/index.erb
+```
+
+```
+
 

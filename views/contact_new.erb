@@ -19,7 +19,12 @@
   <% end %>
 
   <form action="/contacts" method="post">
-    <input type="text" name="name" id="">
+    <div class="contact_name">
+      <label for="name">名前：<input type="text" name="name" id="name" value="<%= @contact.name %>"></label>
+    </div><!-- /.contact_name -->
+    <div class="contact_email">
+      <label for="email">メール：<input type="text" name="email" id="email" value="<%= @contact.email %>"></label>
+    </div><!-- /.contact_email -->
     <input type="submit" value="送信">
   </form>
   <div><a href="/">戻る</a></div>

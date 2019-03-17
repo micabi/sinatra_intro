@@ -14,6 +14,7 @@ enable :sessions
 
 class Contact < ActiveRecord::Base
   validates_presence_of :name
+  validates_presence_of :email
 end
 
 ## コントローラー
@@ -22,8 +23,8 @@ get '/' do
   @now = Time.now
   #"Hello World! Time is #{ now }"
   @contacts = Contact.all
-  @message = session[:message]
-  #@message = session.delete :message
+  #@message = session[:message]
+  @message = session.delete :message
   erb :index
 end
 
@@ -38,10 +39,11 @@ post '/contacts' do
 
   # postされたデータの取り出し
   name = params[:name]
-  puts name
+  #puts name
+  email = params[:email]
 
   # DBへの保存
-  @contact = Contact.new({name: name})
+  @contact = Contact.new({name: name, email: email})
   if @contact.save
     session[:message] = "#{name}さんを追加しました。"
     redirect '/' # topにリダイレクト
