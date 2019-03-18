@@ -376,14 +376,16 @@ namespace :db do
   end
 end
 ```
-load_configという名前のタスクを設定する。この場合の内容は、単にapp.rbを読み込めというだけのもの。
-先ほどapp.rbに追記した
-```
-set :database, {adapter: "sqlite3", database: "contacts.sqlite3"}
-```
-を実行してくれる。
 
->rakefile（rakeコマンド）自体はデータベースを作成するためだけのコマンドではない。
+>rakefile（rakeコマンド）自体はデータベースを作成するためだけの専用コマンドではない。
+
+インストールしてあるgem 'sinatra-activerecord'に入っているrakeモジュールを読み込み(require)、:dbという名前をつけてある機能の設定を読み込め、というようなことが書いてある。実際にはこれを実行(bundle exec rake -T)すると、
+
+1. rake db:create_migration
+2. rake db:migrate
+3. rake db:rollback
+
+の3つのコマンドが使えるようになる。
 
 
 ### Rakefileを実行する
