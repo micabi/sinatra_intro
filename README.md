@@ -837,12 +837,31 @@ end
 
 @views/contact_new.erb
 ```
+<form action="/contacts" method="post">
 
+      名前：<input type="text" name="name" value="<%= @contact.name %>">
+      メール：<input type="text" name="email" value="<%= @contact.email %>">
+
+    <input type="submit" value="送信">
+  </form>
 ```
 
 @views/index.erb
 ```
-
+<table>
+    <tr>
+      <th>ID</th>
+      <th>name</th>
+      <th>email</th>
+    </tr>
+    <% @contacts.each do | contact | %>
+    <tr>
+      <td><%= contact.id %></td>
+      <td><%= contact.name %></td>
+      <td><%= contact.email %></td>
+    </tr>
+    <% end  %>
+  </table>
 ```
 
 
